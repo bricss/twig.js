@@ -22,7 +22,7 @@ module.exports = function (Twig) {
      * @param {Array|Object} params The parameters to parse.
      * @param {Object} context The render context.
      *
-     * @return {Promise} A promise that resolves to the parsed parameters or false.
+     * @return {Promise<*>} A promise that resolves to the parsed parameters or false.
      */
     function parseParams(state, params, context) {
         if (params) {
@@ -234,7 +234,7 @@ module.exports = function (Twig) {
             type: Twig.expression.type.operator.binary,
             // Match any of ??, ?:, +, *, /, -, %, ~, <=>, <, <=, >, >=, !=, ==, **, ?, :, and, b-and, or, b-or, b-xor, in, not in
             // and, or, in, not in, matches, starts with, ends with can be followed by a space or parenthesis
-            regex: /(^\?\?|^\?\s*:|^(b-and)|^(b-or)|^(b-xor)|^[+\-~%]|^\?(?![.\[])|^(<=>)|^:(?!\d])|^[!=]==?|^[!<>]=?|^\*\*?|^\/\/?|^(and)[(|\s+]|^(or)[(|\s+]|^(in)[(|\s+]|^(not in)[(|\s+]|^(matches)|^(starts with)|^(ends with)|^\.\.)/,
+            regex: /(^\?\?|^\?\s*:|^(b-and)|^(b-or)|^(b-xor)|^[+\-~%]|^\?(?![.\[])|^(<=>)|^[:](?!\d\])|^[!=]==?|^[!<>]=?|^\*\*?|^\/\/?|^(and)[(|\s+]|^(or)[(|\s+]|^(in)[(|\s+]|^(not in)[(|\s+]|^(matches)|^(starts with)|^(ends with)|^\.\.)/,
             next: Twig.expression.set.expressions,
             transform(match, tokens) {
                 switch (match[0]) {
@@ -242,7 +242,7 @@ module.exports = function (Twig) {
                     case 'or(':
                     case 'in(':
                     case 'not in(':
-                        // Strip off the (if it exists)
+                        // Strip off the ( if it exists
                         tokens[tokens.length - 1].value = match[2];
                         return match[0];
                     default:
@@ -368,7 +368,7 @@ module.exports = function (Twig) {
              */
             type: Twig.expression.type.string,
             // See: http://blog.stevenlevithan.com/archives/match-quoted-string
-            regex: /^(["'])(?:\\[\s\S]|(?!\1)[^\\])*\1/,
+            regex: /^(["'])(?:(?=(\\?))\2[\s\S])*?\1/,
             next: Twig.expression.set.operationsExtended,
             compile(token, stack, output) {
                 let {value} = token;
@@ -607,7 +607,7 @@ module.exports = function (Twig) {
         },
         {
             type: Twig.expression.type.slice,
-            regex: /^\[(-?\w*:-?\w*)]/,
+            regex: /^\[(-?\w*:-?\w*)\]/,
             next: Twig.expression.set.operationsExtended,
             compile(token, stack, output) {
                 const sliceRange = token.match[1].split(':');
@@ -678,7 +678,7 @@ module.exports = function (Twig) {
              * Match an array end.
              */
             type: Twig.expression.type.array.end,
-            regex: /^]/,
+            regex: /^\]/,
             next: Twig.expression.set.operationsExtended,
             compile(token, stack, output) {
                 let i = stack.length - 1;
@@ -738,7 +738,7 @@ module.exports = function (Twig) {
         // representation of a hash map is defined.
         {
             type: Twig.expression.type.object.end,
-            regex: /^}/,
+            regex: /^\}/,
             next: Twig.expression.set.operationsExtended,
             compile(token, stack, output) {
                 let i = stack.length - 1;
@@ -1032,7 +1032,7 @@ module.exports = function (Twig) {
                             value = null;
                         }
 
-                        // When resolving an expression, we need to pass nextToken in case the expression is a function
+                        // When resolving an expression we need to pass nextToken in case the expression is a function
                         return Twig.expression.resolveAsync.call(state, value, object, params, nextToken);
                     })
                     .then(result => {
@@ -1096,7 +1096,7 @@ module.exports = function (Twig) {
      * @param {Object} nextToken The next token in the expression.
      * @param {Object} object The object context.
      *
-     * @return {Promise} A promise that resolves to the resolved value.
+     * @return {Promise<*>} A promise that resolves to the resolved value.
      */
     Twig.expression.resolveAsync = function (value, context, params, nextToken, object) {
         const state = this;
@@ -1146,13 +1146,13 @@ module.exports = function (Twig) {
     /**
      * Resolve a context value synchronously.
      *
-     * @param {*} value The value to resolve.
+     * @param {string} value The context object key.
      * @param {Object} context The render context.
      * @param {Array} params The parameters to pass to the function.
      * @param {Object} nextToken The next token in the expression.
      * @param {Object} object The object context.
      *
-     * @return {Promise} A promise that resolves to the resolved value.
+     * @return {*} The resolved value.
      */
     Twig.expression.resolve = function (value, context, params, nextToken, object) {
         return Twig.async.potentiallyAsync(this, false, function () {
@@ -1388,7 +1388,9 @@ module.exports = function (Twig) {
      * @param {boolean} tokensAreParameters Indicates if the tokens are parameters.
      * @param {boolean} allowAsync Indicates if async operations are allowed.
      *
-     * @return {Promise} A promise that resolves to the parsed result.
+     * @return {*|Promise<*>} The result of parsing all the tokens. The result
+     *                        can be anything, String, Array, Object, etc... based on
+     *                        the given expression.
      */
     Twig.expression.parse = function (tokens, context, tokensAreParameters, allowAsync) {
         const state = this;
