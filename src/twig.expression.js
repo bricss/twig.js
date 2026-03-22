@@ -4,12 +4,12 @@
 module.exports = function (Twig) {
     'use strict';
 
-    function normalizeObject(object) {
-        return object === null ? null : Object(object);
-    }
-
     function isSafeAccess(value) {
         return value != null; // Use != null to check for both null and undefined
+    }
+
+    function normalizeObject(object) {
+        return object === null ? null : Object(object);
     }
 
     function parseParams(state, params, context) {
@@ -901,11 +901,7 @@ module.exports = function (Twig) {
                             throw new Twig.Error('Variable "' + token.value + '" does not exist.');
                         }
 
-                        if (isOptionalChain && !isSafeAccess(value)) {
-                            stack.push(undefined);
-                        } else {
-                            stack.push(value);
-                        }
+                        stack.push(value);
                     });
             }
         },
